@@ -1,29 +1,27 @@
-// index.ts
-
 import express from "express";
-
-import coordinator from "./Routes/coordinator";
-import dotenv from "dotenv";
-import { CustomError } from "./Errors/CustomError";
-import { Server as SocketServer } from "socket.io";
 import http from "http";
-import { initSockets } from "./socket";
+import { Server as SocketServer } from "socket.io";
 import cors from "cors";
+import dotenv from "dotenv";
+import coordinator from "./Routes/coordinator";
+import { initSockets } from "./socket";
+import { CustomError } from "./Errors/CustomError";
 
 dotenv.config();
 
 const app = express();
-app.use(express.json());
-
 app.use(cors());
+app.use(express.json());
 app.use(coordinator);
+
 const server = http.createServer(app);
 const io = new SocketServer(server, {
   cors: {
-    origin: "*",
+    origin: "http://localhost:5173",
   },
 });
-console.log("Socket server started", io._checkNamespace);
+
+initSockets(io);
 
 app.use(
   (
@@ -32,25 +30,14 @@ app.use(
     res: express.Response,
     next: express.NextFunction
   ) => {
-    console.log("here errro");
     if (err instanceof CustomError) {
-      console.log("here");
-      console.log(err);
       return res.status(err.statusCode).json({ message: err.message });
     }
-    console.log(err);
     res.status(500).json({ message: "Something went wrong" });
   }
 );
 
-initSockets(io);
-
-const PORT = process.env.PORT || 3000;
-
-app.listen(PORT, () => {
-  console.log(` server is running on port ${PORT}`);
-});
-
-server.listen(3001, () => {
-  console.log("socket server started on port 3001");
+const PORT = process.env.PORT || 3000; // Use the same port for HTTP and WebSocket
+server.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
 });
