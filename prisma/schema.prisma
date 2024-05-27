@@ -1,0 +1,79 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+model User {
+  id       String    @id @default(auto()) @map("_id") @db.ObjectId
+  email    String    @unique
+  username String    @unique
+  image    String?
+  password String
+  dateOfBirth DateTime @default(now())
+  emailVerified DateTime?
+  createdAt DateTime @default(now())
+  deletedAt DateTime?
+
+  coversationIds String[] @db.ObjectId
+  conversations Conversation[] @relation(fields: [coversationIds], references: [id])
+
+  accounts Account[]
+  messages Message[]
+}
+ 
+model Account {
+  id       String    @id @default(auto()) @map("_id") @db.ObjectId
+  userId   String   @db.ObjectId
+  type     String
+  provider String
+  providerAccountId String
+  access_token String? @db.String
+  refresh_token String? @db.String
+  expires_at Int?
+  token_type String?
+  scope String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+
+}
+
+model Conversation {
+  id       String    @id @default(auto()) @map("_id") @db.ObjectId
+  name     String
+  image    String?
+  createdAt DateTime @default(now())
+  lastMessageAt DateTime? @default(now())
+  deletedAt DateTime?
+
+  isGroup Boolean? @default(false)
+
+  userIds String[] @db.ObjectId
+  users User[] @relation(fields: [userIds], references: [id])
+  messagesIds String[] @db.ObjectId
+  messages Message[] 
+  admin String @db.ObjectId
+}
+
+model Message {
+  id       String    @id @default(auto()) @map("_id") @db.ObjectId
+  body  String?
+  file    String[]
+  type    String? @default("text")
+  createdAt DateTime @default(now())
+  deletedAt DateTime?
+
+  conversationId String @db.ObjectId
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  senderId String @db.ObjectId
+  sender User @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  isSeen Boolean? @default(false)
+}
+
+
