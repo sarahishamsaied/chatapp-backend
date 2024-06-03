@@ -10,5 +10,5 @@ export const userSignUpSchema = Joi.object({
 
 export const userSignInSchema = Joi.object({
   email: Joi.string().required(),
-  password: Joi.string().pattern(new RegExp("^[a-zA-Z0-9]{3,30}$")),
+  password: Joi.string().min(3).required(),
 });
